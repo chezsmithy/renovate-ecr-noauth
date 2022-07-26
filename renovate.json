@@ -1,0 +1,175 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "branchPrefix": "renovate-",
+  "extends": [
+    "config:base",
+    "docker:pinDigests",
+    "docker:enableMajor",
+    "regexManagers:dockerfileVersions",
+    ":maintainLockFilesWeekly",
+    ":label(renovate)",
+    ":separateMajorReleases",
+    "group:allNonMajor",
+    ":preserveSemverRanges"
+  ],
+  "npmrc": "registry=https://artifactory.cambiahealth.com/artifactory/api/npm/npm/\nalways-auth=true",
+  "python": {
+    "registryUrls": ["https://artifactory.cambiahealth.com/artifactory/api/pypi/pypi/simple"]
+  },
+  "packageRules": [
+    {
+      "matchDatasources": [
+        "clojure",
+        "maven"
+      ],
+      "registryUrls": [
+        "https://artifactory.cambiahealth.com/artifactory/libs-release",
+        "https://artifactory.cambiahealth.com/artifactory/libs-snapshot",
+        "https://artifactory.cambiahealth.com/artifactory/plugins-release",
+        "https://artifactory.cambiahealth.com/artifactory/plugins-snapshot"
+      ]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["amazoncorretto"],
+      "allowedVersions": "<12.0.0"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["node"],
+      "allowedVersions": "<17.0.0"
+    },
+    {
+      "datasources": ["docker"],
+      "managers": ["ansible", "docker-compose", "dockerfile", "droneci", "gitlabci", "kubernetes", "regex"],
+      "groupName": "container images",
+      "groupSlug": "container-images"
+    }
+  ],
+  "npm": {
+    "extends": [
+      ":unpublishSafe"
+    ],
+    "rangeStrategy": "bump",
+    "packageRules": [
+      {
+        "groupName": "ESLint and Prettier",
+        "packageNames": ["eslint", "prettier"],
+        "packagePatterns": ["^eslint-config-", "^eslint-plugin-"]
+      },
+      {
+        "description": "engines and npm updates go with container images",
+        "depTypeList": ["engines"],
+        "groupName": "container images",
+        "groupSlug": "container-images"
+      }
+    ]
+  },
+  "pip_requirements": {
+    "fileMatch": ["(^|/)([\\w-]*)requirements\\.(txt|pip)$", "(^|/)([\\w-]*)requirements-.+\\.(txt|pip)$"]
+  },
+  "circleci": {
+    "fileMatch": ["(^|/).circleci/config.yml$"]
+  },
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "(^|/)Dockerfile$",
+        "(^|/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "FROM 081606171748\.dkr\.ecr\.us-west-2\.amazonaws\.com\/(?<depName>[^:\\n]*)(:?)(?<currentValue>[^@\\n\\s]*)(@?)(?<currentDigest>sha256:[a-f,0-9]+)?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
+      "autoReplaceStringTemplate": "FROM docker.artifactory.cambiahealth.com/{{{depName}}}:{{{newValue}}}",
+      "registryUrlTemplate": "https://docker.artifactory.cambiahealth.com"
+    },
+    {
+      "fileMatch": [
+        "(^|/)Dockerfile$",
+        "(^|/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "FROM\\s+(?<depName>(?<shouldMigrate>artifactory\\.cambiahealth\\.com\\/docker\\/adoptopenjdk\\/openjdk11)?[^\\s:]*):(?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "{{#if shouldMigrate}}amazoncorretto{{else}}{{{depName}}}{{/if}}",
+      "currentValueTemplate": "{{#if shouldMigrate}}11.0.0{{else}}{{{currentValue}}}{{/if}}",
+      "autoReplaceStringTemplate": "FROM {{{depName}}}:{{{newValue}}}",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": [
+        "(^|/)Dockerfile$",
+        "(^|/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "FROM\\s+(?<depName>(?<shouldMigrate>artifactory\\.cambiahealth\\.com\\/docker\\/openjdk)?[^\\s:]*):(?<currentValue>[^-\\s]+)"
+      ],
+      "depNameTemplate": "{{#if shouldMigrate}}amazoncorretto{{else}}{{{depName}}}{{/if}}",
+      "autoReplaceStringTemplate": "FROM {{{depName}}}:{{{newValue}}}",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": [
+        "(^|/)Dockerfile$",
+        "(^|/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "FROM\\s+(?<depName>(?<shouldMigrate>artifactory\\.cambiahealth\\.com\\/docker\\/chp-common-node)?[^\\s:]*):(?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "{{#if shouldMigrate}}node{{else}}{{{depName}}}{{/if}}",
+      "currentValueTemplate": "{{#if shouldMigrate}}16.0.0{{else}}{{{currentValue}}}{{/if}}",
+      "autoReplaceStringTemplate": "FROM {{{depName}}}:{{{newValue}}}",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": [
+        "(^|/)Dockerfile$",
+        "(^|/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "FROM\\s+(?<depName>(?<shouldMigrate>artifactory\\.cambiahealth\\.com\\/docker\\/chp-common-debian)?[^\\s:]*):(?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "{{#if shouldMigrate}}debian{{else}}{{{depName}}}{{/if}}",
+      "currentValueTemplate": "{{#if shouldMigrate}}10.0{{else}}{{{currentValue}}}{{/if}}",
+      "autoReplaceStringTemplate": "FROM {{{depName}}}:{{{newValue}}}",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": [
+        "(^|/)Dockerfile$",
+        "(^|/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "FROM\\s+(?<depName>(?<shouldMigrate>artifactory\\.cambiahealth\\.com\\/docker\\/chp-common-debian-buildpack-deps)?[^\\s:]*):(?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "{{#if shouldMigrate}}buildpack-deps{{else}}{{{depName}}}{{/if}}",
+      "currentValueTemplate": "{{#if shouldMigrate}}10.0{{else}}{{{currentValue}}}{{/if}}",
+      "autoReplaceStringTemplate": "FROM {{{depName}}}:{{{newValue}}}",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": [
+        "^Dockerfile*"
+      ],
+      "matchStrings": [
+        "FROM artifactory.cambiahealth.com\/docker\/(?<depName>[^:\n]*)(:?)(?<currentValue>[^@\n]*)(@?)(?<currentDigest>sha256:[a-f,0-9]+)?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": [
+        "^docker-compose*.yml$"
+      ],
+      "matchStrings": [
+        "image:\\s?artifactory.cambiahealth.com\/docker\/(?<depName>[^:\n]*)(:?)(?<currentValue>[^@\n]*)(@?)(?<currentDigest>sha256:[a-f,0-9]+)?"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}

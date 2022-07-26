@@ -1,0 +1,3 @@
+ FROM docker.artifactory.cambiahealth.com/chp-build-python-jobrunner:3.8-buster
+
+ # Expect this to result in an update to 3.9-buster and a pinned digest
